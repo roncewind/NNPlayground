@@ -5,6 +5,15 @@ Neural Network mucking about.
 
 This is an attempt to create a framework for creating NNs for various purposes.
 
+### Getting started:
+
+Create a virtual environment and activate it:
+
+```
+python3 -m venv venv
+sounce venv/bin/activate
+```
+
 ### How to train:
 
 Note: see the sample_data.csv entry in [Output files](Output files:) for a python one-liner to create a random sample file.
