@@ -1,11 +1,11 @@
 True Class,Predicted As,Count,Total True,% of True
-en,ar,6,24,25.0
-uk,be,6,30,20.0
-ru,ar,5,25,20.0
-in,en,5,26,19.23
-ja,ar,5,26,19.23
-zh,ar,5,27,18.52
-ar,uk,5,28,17.86
-tr,en,5,29,17.24
-tr,ru,5,29,17.24
-tr,zh,5,29,17.24
+uk,zh,7,28,25.0
+el,ja,7,31,22.58
+th,uk,5,23,21.74
+tr,uk,5,23,21.74
+ru,be,6,30,20.0
+ru,zh,6,30,20.0
+ja,en,5,27,18.52
+ar,zh,5,28,17.86
+zh,ja,5,28,17.86
+be,in,5,31,16.13

@@ -28,8 +28,6 @@ class CSVDataset(Dataset):
 def feature_extractor(row):
     # Replace with real logic later. Assumes all features are in columns except 'label'
     x = dummy_feature_extractor(row)
-    # output type
-    print(type(x))
     return x
 
 

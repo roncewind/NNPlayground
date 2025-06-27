@@ -14,6 +14,18 @@ python3 -m venv venv
 sounce venv/bin/activate
 ```
 
+Install the requirements into the virtual environment.
+
+```
+pip install -r requirements.txt
+```
+
+Note: if new packages are added the requirements.txt can be updated with:
+
+```
+pip freeze > requirements.txt
+```
+
 ### How to train:
 
 Note: see the sample_data.csv entry in [Output files](Output files:) for a python one-liner to create a random sample file.
@@ -80,7 +92,7 @@ python test_predict_row.py
 - `data/sample_data.csv` and `test_sample.csv` dummy random sample data created to test
     the framework.
     - the sample data is created with `python -c "from dataset import generate_random_csv; generate_random_csv('data/sample_data.csv', 1500)"`
-    - test sample is created with `python -c "import pandas as pd; df = pd.read_csv('sample_data.csv'); df.tail(5).to_csv('data/test_samples.csv', index=False)"`
+    - test sample is created with `python -c "import pandas as pd; df = pd.read_csv('data/sample_data.csv'); df.tail(5).to_csv('data/test_samples.csv', index=False)"`
 
 - `data/classification_report.txt` records a summary of how well the model performs it includes: the precision, recall, F1-score, and support.
 
