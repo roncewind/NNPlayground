@@ -1,0 +1,12 @@
+{
+    "hidden_size": 64,
+    "num_layers": 2,
+    "batch_size": 32,
+    "learning_rate": 0.001,
+    "best_val_accuracy": 0.1333,
+    "early_stopped_epoch": 73,
+    "num_epochs": 100,
+    "patience": 5,
+    "input_dim": 33,
+    "output_classes": 11
+}
