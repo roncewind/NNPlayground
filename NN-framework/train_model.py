@@ -71,13 +71,13 @@ def log_run_results(config, best_val_acc, stopped_epoch):
 
 # -----------------------------------------------------------------------------
 # Train the model
-# def train(csv_path, hidden_size=HIDDEN_SIZE):
 def train(
     csv_path,
     hidden_size=HIDDEN_SIZE,
     num_layers=NUM_LAYERS,
     batch_size=BATCH_SIZE,
     learning_rate=LEARNING_RATE,
+    patience=PATIENCE,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
@@ -100,7 +100,9 @@ def train(
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     best_val_acc = 0
-    # epochs_no_improve = 0
+    epochs_no_improve = 0
+    best_epoch = 0
+    best_model_state = None
 
     for epoch in range(NUM_EPOCHS):
         model.train()
@@ -135,13 +137,26 @@ def train(
             f"Epoch {epoch + 1:02d} | Train Acc: {train_acc:.4f} | Val Acc: {val_acc:.4f}"
         )
 
+        # Early stopping
         if val_acc > best_val_acc:
             best_val_acc = val_acc
             best_epoch = epoch + 1
+            epochs_no_improve = 0
+            # Save best model
+            best_model_state = model.state_dict()
+        else:
+            epochs_no_improve += 1
+            if epochs_no_improve >= patience:
+                print(f"Early stopping at epoch {epoch + 1}")
+                break
 
         print(
             f"Best validation accuracy so far: {best_val_acc:.4f} (epoch {best_epoch})"
         )
+
+    # Restore best model weights
+    if best_model_state:
+        model.load_state_dict(best_model_state)
     save_per_class_metrics(all_trues, all_preds)
     plot_confusion_matrix(all_trues, all_preds, normalized=True)
     plot_confusion_matrix(all_trues, all_preds, normalized=False)
@@ -159,7 +174,7 @@ def train(
     )
     # save the model
     torch.save(model.state_dict(), MODEL_PATH)
-    print(f"Saved model state at epoch {epoch + 1}")
+    print(f"📝 Saved model state at epoch {epoch + 1}")
     # Save the best model configuration to a JSON file
     save_model_config(
         {
