@@ -100,12 +100,12 @@ std::vector<std::string> load_class_labels(const std::string &filename)
 }
 
 // ============================================================================
-int main()
+int main(int argc, char* argv[])
 {
     auto flags = parse_flags(argc, argv);
 
-    std::string model_path = flags.count("--model") ? flags["--model"] : "model.onnx";
-    std::string labels_path = flags.count("--labels") ? flags["--labels"] : "class_labels.txt";
+    std::string model_path = flags.count("--model") ? flags["--model"] : "../data/best_model.onnx";
+    std::string labels_path = flags.count("--labels") ? flags["--labels"] : "../data/class_labels.txt";
     int input_size = flags.count("--input-size") ? std::stoi(flags["--input-size"]) : 33;
     int output_size = flags.count("--output-size") ? std::stoi(flags["--output-size"]) : 11;
     int k = flags.count("--top-k") ? std::stoi(flags["--top-k"]) : 3;
