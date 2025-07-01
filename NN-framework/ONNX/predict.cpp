@@ -22,6 +22,24 @@
 #include <numeric>
 #include <algorithm>
 #include <fstream>
+#include <string>
+#include <unordered_map>
+
+// ============================================================================
+// Minimal flag parser
+std::unordered_map<std::string, std::string> parse_flags(int argc, char *argv[])
+{
+    std::unordered_map<std::string, std::string> flags;
+    for (int i = 1; i < argc - 1; ++i)
+    {
+        if (argv[i][0] == '-' && argv[i + 1][0] != '-')
+        {
+            flags[argv[i]] = argv[i + 1];
+            ++i;
+        }
+    }
+    return flags;
+}
 
 // ============================================================================
 std::vector<std::pair<int, float>> top_k(const std::vector<float> &probs, int k)
@@ -84,13 +102,25 @@ std::vector<std::string> load_class_labels(const std::string &filename)
 // ============================================================================
 int main()
 {
+    auto flags = parse_flags(argc, argv);
+
+    std::string model_path = flags.count("--model") ? flags["--model"] : "model.onnx";
+    std::string labels_path = flags.count("--labels") ? flags["--labels"] : "class_labels.txt";
+    int input_size = flags.count("--input-size") ? std::stoi(flags["--input-size"]) : 33;
+    int output_size = flags.count("--output-size") ? std::stoi(flags["--output-size"]) : 11;
+    int k = flags.count("--top-k") ? std::stoi(flags["--top-k"]) : 3;
+
+    std::cout << "📦 Model: " << model_path << "\n";
+    std::cout << "📄 Labels: " << labels_path << "\n";
+    std::cout << "📐 Input size: " << input_size << ", Output size: " << output_size << "\n";
+
     // Initialize environment
     Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "onnx_inference");
 
     // Create session
     Ort::SessionOptions session_options;
     session_options.SetIntraOpNumThreads(1);
-    Ort::Session session(env, "../data/best_model.onnx", session_options);
+    Ort::Session session(env, model_path.c_str(), session_options);
 
     // Get allocator and input/output names
     Ort::AllocatorWithDefaultOptions allocator;
@@ -111,10 +141,10 @@ int main()
         output_names.push_back(s.c_str());
 
     // batch=1, 33 features
-    const std::array<int64_t, 2> input_shape{1, 33};
+    const std::array<int64_t, 2> input_shape{1, input_size};
 
     // Create input tensor with 33 dummy values
-    std::vector<float> input_values(33, 0.5f); // TODO: Replace with real data
+    std::vector<float> input_values(input_size, 0.5f); // TODO: Replace with real data
 
     Ort::MemoryInfo memory_info = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);
     Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
@@ -132,24 +162,24 @@ int main()
     // Get output
     float *output = output_tensors.front().GetTensorMutableData<float>();
 
-    std::vector<std::string> class_labels = load_class_labels("../data/class_labels.txt");
-    if (class_labels.size() != 11)
+    // Load labels
+    std::vector<std::string> class_labels = load_class_labels(labels_path);
+    if (class_labels.size() != static_cast<size_t>(output_size))
     {
-        std::cerr << "❌ Error: class_labels.txt must contain exactly 11 labels.\n";
+        std::cerr << "❌ Mismatch: class label count != output size\n";
         return 1;
     }
 
     std::cout << "\n✅ Model output (class scores):" << std::endl;
-    for (int i = 0; i < 11; ++i)
+    for (int i = 0; i < output_size; ++i)
     {
         std::cout << class_labels[i] << " (class " << i << "): " << output[i] << std::endl;
     }
 
     // Apply softmax to get probabilities
-    std::vector<float> probs = softmax(output, 11);
+    std::vector<float> probs = softmax(output, output_size);
 
     // Print top-3 predictions
-    int k = 3;
     auto top_preds = top_k(probs, k);
 
     std::cout << "\n🔝 Top " << k << " predictions:" << std::endl;

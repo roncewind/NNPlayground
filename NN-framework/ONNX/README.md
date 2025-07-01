@@ -1,6 +1,6 @@
 # Using ONNX
 
-## Linux
+## Setup ONNX on Linux
 
 - Download the ONNX runtime .tgz file from: https://github.com/microsoft/onnxruntime/releases
 - Un-tar: `tar -zxvf ~/Downloads/onnxruntime-linux-x64-<version>.tgz`
@@ -50,3 +50,14 @@ sudo ldconf
 ```
 export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 ```
+
+
+## TODO:
+
+🔧 Nice-to-Haves:
+✅  📉 Add a softmax function to get probability scores
+✅  🔝 Print or log top-1 / top-3 predicted class labels
+    📉 Measure inference time per sample
+    🔁 Loop over a batch of CSV inputs
+    🚀 Use ONNX Runtime with GPU (CUDA EP) for acceleration
+    📦 Package as a CLI tool for quick inference from the terminal
