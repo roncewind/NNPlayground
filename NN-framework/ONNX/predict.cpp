@@ -100,7 +100,51 @@ std::vector<std::string> load_class_labels(const std::string &filename)
 }
 
 // ============================================================================
-int main(int argc, char* argv[])
+std::vector<std::vector<float>> load_csv_inputs(const std::string &filepath, int expected_dim, bool skip_header = true)
+{
+    std::vector<std::vector<float>> data;
+    std::ifstream file(filepath);
+    std::string line;
+
+    bool first_row = true;
+    while (std::getline(file, line))
+    {
+        if (first_row && skip_header)
+        {
+            first_row = false;
+            continue;
+        }
+
+        std::stringstream ss(line);
+        std::string item;
+        std::vector<float> row;
+
+        while (std::getline(ss, item, ','))
+        {
+            try
+            {
+                row.push_back(std::stof(item));
+            }
+            catch (const std::exception &e)
+            {
+                throw std::runtime_error("❌ Non-numeric value in row: " + line);
+            }
+        }
+
+        if (row.size() != expected_dim)
+        {
+            throw std::runtime_error("❌ Row size mismatch: expected " + std::to_string(expected_dim) +
+                                     ", got " + std::to_string(row.size()));
+        }
+
+        data.push_back(std::move(row));
+    }
+
+    return data;
+}
+
+// ============================================================================
+int main(int argc, char *argv[])
 {
     auto flags = parse_flags(argc, argv);
 
@@ -109,6 +153,26 @@ int main(int argc, char* argv[])
     int input_size = flags.count("--input-size") ? std::stoi(flags["--input-size"]) : 33;
     int output_size = flags.count("--output-size") ? std::stoi(flags["--output-size"]) : 11;
     int k = flags.count("--top-k") ? std::stoi(flags["--top-k"]) : 3;
+    bool skip_header = true; // default is true
+    if (flags.count("--skip-header"))
+    {
+        std::string val = flags["--skip-header"];
+        std::transform(val.begin(), val.end(), val.begin(), ::tolower);
+        skip_header = (val == "true" || val == "1" || val == "yes");
+    }
+
+    std::vector<std::vector<float>> input_vectors;
+    if (flags.count("--test-csv"))
+    {
+        std::string csv_path = flags["--test-csv"];
+        std::cout << "📂 Loading input features from CSV (with header): " << csv_path << "\n";
+        input_vectors = load_csv_inputs(csv_path, input_size, skip_header);
+    }
+    else
+    {
+        std::cout << "⚠️  No --test-csv provided. Using dummy input.\n";
+        input_vectors.push_back(std::vector<float>(input_size, 0.5f)); // dummy
+    }
 
     std::cout << "📦 Model: " << model_path << "\n";
     std::cout << "📄 Labels: " << labels_path << "\n";
@@ -140,55 +204,81 @@ int main(int argc, char* argv[])
     for (const auto &s : output_names_str)
         output_names.push_back(s.c_str());
 
-    // batch=1, 33 features
-    const std::array<int64_t, 2> input_shape{1, input_size};
-
-    // Create input tensor with 33 dummy values
-    std::vector<float> input_values(input_size, 0.5f); // TODO: Replace with real data
-
-    Ort::MemoryInfo memory_info = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);
-    Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
-        memory_info, input_values.data(), input_values.size(), input_shape.data(), input_shape.size());
-
-    // Run inference
-    auto output_tensors = session.Run(
-        Ort::RunOptions{nullptr},
-        input_names.data(),
-        &input_tensor,
-        1,
-        output_names.data(),
-        1);
-
-    // Get output
-    float *output = output_tensors.front().GetTensorMutableData<float>();
-
     // Load labels
     std::vector<std::string> class_labels = load_class_labels(labels_path);
-    if (class_labels.size() != static_cast<size_t>(output_size))
+
+    for (size_t row_idx = 0; row_idx < input_vectors.size(); ++row_idx)
     {
-        std::cerr << "❌ Mismatch: class label count != output size\n";
-        return 1;
+
+        const auto &features = input_vectors[row_idx];
+        std::array<int64_t, 2> input_shape{1, input_size};
+
+        Ort::MemoryInfo memory_info = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);
+        Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
+            memory_info,
+            const_cast<float *>(features.data()),
+            features.size(),
+            input_shape.data(),
+            input_shape.size());
+
+        auto output_tensors = session.Run(
+            Ort::RunOptions{nullptr},
+            input_names.data(),
+            &input_tensor,
+            1,
+            output_names.data(),
+            1);
+        // batch=1, 33 features
+        // const std::array<int64_t, 2> input_shape{1, input_size};
+
+        // Create input tensor with 33 dummy values
+        // std::vector<float> input_values(input_size, 0.5f); // TODO: Replace with real data
+
+        // Ort::MemoryInfo memory_info = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);
+        // Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
+        //     memory_info, input_values.data(), input_values.size(), input_shape.data(), input_shape.size());
+
+        // Run inference
+        // auto output_tensors = session.Run(
+        //     Ort::RunOptions{nullptr},
+        //     input_names.data(),
+        //     &input_tensor,
+        //     1,
+        //     output_names.data(),
+        //     1);
+
+        // Get output
+        float *logits = output_tensors.front().GetTensorMutableData<float>();
+        std::vector<float> probs = softmax(logits, output_size);
+        // float *output = output_tensors.front().GetTensorMutableData<float>();
+
+        if (class_labels.size() != static_cast<size_t>(output_size))
+        {
+            std::cerr << "❌ Mismatch: class label count != output size\n";
+            return 1;
+        }
+
+        std::cout << "\n✅ Model output (class scores):" << std::endl;
+        for (int i = 0; i < output_size; ++i)
+        {
+            std::cout << class_labels[i] << " (class " << i << "): " << logits[i] << std::endl;
+            // std::cout << class_labels[i] << " (class " << i << "): " << output[i] << std::endl;
+        }
+
+        // Apply softmax to get probabilities
+        // std::vector<float> probs = softmax(output, output_size);
+        std::vector<float> probs = softmax(logits, output_size);
+
+        // Print top-3 predictions
+        auto top_preds = top_k(probs, k);
+
+        std::cout << "\n🔝 Top " << k << " predictions:" << std::endl;
+        for (const auto &[class_idx, prob] : top_preds)
+        {
+            std::cout << class_labels[class_idx]
+                      << " (class " << class_idx << "): "
+                      << prob * 100 << "% confidence" << std::endl;
+        }
     }
-
-    std::cout << "\n✅ Model output (class scores):" << std::endl;
-    for (int i = 0; i < output_size; ++i)
-    {
-        std::cout << class_labels[i] << " (class " << i << "): " << output[i] << std::endl;
-    }
-
-    // Apply softmax to get probabilities
-    std::vector<float> probs = softmax(output, output_size);
-
-    // Print top-3 predictions
-    auto top_preds = top_k(probs, k);
-
-    std::cout << "\n🔝 Top " << k << " predictions:" << std::endl;
-    for (const auto &[class_idx, prob] : top_preds)
-    {
-        std::cout << class_labels[class_idx]
-                  << " (class " << class_idx << "): "
-                  << prob * 100 << "% confidence" << std::endl;
-    }
-
     return 0;
 }
