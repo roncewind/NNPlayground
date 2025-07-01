@@ -3,14 +3,21 @@ import os
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import torch.onnx
 from config import (
+    BATCH_SIZE,
     CLASSIFICATION_REPORT_TXT,
     CONF_MATRIX_IMG,
+    HIDDEN_SIZE,
     LABELS_PATH,
     METRICS_CSV,
+    MODEL_PATH,
     NUM_CLASSES,
+    NUM_INPUTS,
+    NUM_LAYERS,
     TOP_MISCLASSIFICATIONS,
 )
+from model import NeuralNet
 from sklearn.metrics import (
     ConfusionMatrixDisplay,
     classification_report,
@@ -139,3 +146,36 @@ def print_classification_report(true_labels, pred_labels):
     with open(CLASSIFICATION_REPORT_TXT, "w") as f:
         f.write(str(report))
     print(f"✅ Saved classification report to {CLASSIFICATION_REPORT_TXT}")
+
+
+# -----------------------------------------------------------------------------
+# python -c "from utils import export_to_onnx; export_to_onnx('data/best_model')"
+def export_to_onnx(
+    onnx_path=MODEL_PATH,
+    hidden_size=HIDDEN_SIZE,
+    num_layers=NUM_LAYERS,
+    batch_size=BATCH_SIZE,
+    model_path=MODEL_PATH,
+    num_inputs=NUM_INPUTS,
+):
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = NeuralNet(hidden_size=hidden_size, num_layers=num_layers).to(device)
+    model.load_state_dict(torch.load(model_path))
+    model.eval()
+
+    # Dummy input for ONNX export
+    dummy_input = torch.randn(batch_size, num_inputs, device=device)
+
+    # Export to ONNX
+    onnx_path = os.path.splitext(onnx_path)[0] + ".onnx"
+    torch.onnx.export(
+        model,
+        dummy_input,
+        onnx_path,
+        input_names=["input"],
+        output_names=["output"],
+        dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}},
+        opset_version=11,
+    )
+    print(f"✅ Exported model to ONNX format at {onnx_path}")

@@ -36,6 +36,7 @@ from model import NeuralNet
 from torch import nn, optim
 from torch.utils.data import DataLoader, random_split
 from utils import (
+    export_to_onnx,
     plot_confusion_matrix,
     print_classification_report,
     save_per_class_metrics,
@@ -87,14 +88,9 @@ def train(
     val_size = len(dataset) - train_size
     train_ds, val_ds = random_split(dataset, [train_size, val_size])
 
-    # train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True)
-    # val_loader = DataLoader(val_ds, batch_size=BATCH_SIZE)
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_ds, batch_size=batch_size)
 
-    # model = NeuralNet(hidden_size=hidden_size).to(device)
-    # criterion = nn.CrossEntropyLoss()
-    # optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
     model = NeuralNet(hidden_size=hidden_size, num_layers=num_layers).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
@@ -189,6 +185,10 @@ def train(
             "input_dim": NUM_INPUTS,
             "output_classes": NUM_CLASSES,
         }
+    )
+    # export_to_onnx("data/best_model")
+    export_to_onnx(
+        MODEL_PATH, hidden_size, num_layers, batch_size, MODEL_PATH, NUM_INPUTS
     )
 
 
