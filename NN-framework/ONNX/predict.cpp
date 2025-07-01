@@ -18,7 +18,55 @@
 #include <iostream>
 #include <vector>
 #include <onnxruntime/onnxruntime_cxx_api.h>
+#include <cmath>
+#include <numeric>
+#include <algorithm>
 
+// ============================================================================
+std::vector<std::pair<int, float>> top_k(const std::vector<float> &probs, int k)
+{
+    std::vector<std::pair<int, float>> indexed_probs;
+    for (size_t i = 0; i < probs.size(); ++i)
+    {
+        indexed_probs.emplace_back(i, probs[i]);
+    }
+
+    // Partial sort for top-k
+    std::partial_sort(
+        indexed_probs.begin(),
+        indexed_probs.begin() + k,
+        indexed_probs.end(),
+        [](const auto &a, const auto &b)
+        { return a.second > b.second; });
+
+    indexed_probs.resize(k);
+    return indexed_probs;
+}
+
+// ============================================================================
+std::vector<float> softmax(const float *logits, size_t size)
+{
+    std::vector<float> probs(size);
+    float max_logit = *std::max_element(logits, logits + size);
+
+    // Compute exponentials (for numerical stability)
+    float sum_exp = 0.0f;
+    for (size_t i = 0; i < size; ++i)
+    {
+        probs[i] = std::exp(logits[i] - max_logit);
+        sum_exp += probs[i];
+    }
+
+    // Normalize
+    for (size_t i = 0; i < size; ++i)
+    {
+        probs[i] /= sum_exp;
+    }
+
+    return probs;
+}
+
+// ============================================================================
 int main()
 {
     // Initialize environment
@@ -39,11 +87,13 @@ int main()
     std::vector<std::string> output_names_str = session.GetOutputNames();
 
     // Convert to const char* arrays
-    std::vector<const char*> input_names;
-    for (const auto& s : input_names_str) input_names.push_back(s.c_str());
+    std::vector<const char *> input_names;
+    for (const auto &s : input_names_str)
+        input_names.push_back(s.c_str());
 
-    std::vector<const char*> output_names;
-    for (const auto& s : output_names_str) output_names.push_back(s.c_str());
+    std::vector<const char *> output_names;
+    for (const auto &s : output_names_str)
+        output_names.push_back(s.c_str());
 
     // batch=1, 33 features
     const std::array<int64_t, 2> input_shape{1, 33};
@@ -53,81 +103,38 @@ int main()
 
     Ort::MemoryInfo memory_info = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);
     Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
-        memory_info, input_values.data(), input_values.size(), input_shape.data(), input_shape.size()
-    );
+        memory_info, input_values.data(), input_values.size(), input_shape.data(), input_shape.size());
 
     // Run inference
-    // auto output_tensors = session.Run(
-    //     Ort::RunOptions{nullptr},
-    //     &input_names,
-    //     &input_tensor,
-    //     1,
-    //     &output_name,
-    //     1
-    // );
     auto output_tensors = session.Run(
         Ort::RunOptions{nullptr},
         input_names.data(),
         &input_tensor,
         1,
         output_names.data(),
-        1
-    );
+        1);
 
     // Get output
     float *output = output_tensors.front().GetTensorMutableData<float>();
 
-    std::cout << "Model output (class scores):" << std::endl;
+    std::cout << "✅ Model output (class scores):" << std::endl;
     for (int i = 0; i < 11; ++i)
     {
         std::cout << "Class " << i << ": " << output[i] << std::endl;
     }
 
+    // Apply softmax to get probabilities
+    std::vector<float> probs = softmax(output, 11);
+
+    // Print top-3 predictions
+    int k = 3;
+    auto top_preds = top_k(probs, k);
+
+    std::cout << "\n🔝 Top " << k << " predictions:" << std::endl;
+    for (const auto &[class_idx, prob] : top_preds)
+    {
+        std::cout << "Class " << class_idx << ": " << prob * 100 << "% confidence" << std::endl;
+    }
+
     return 0;
 }
-
-
-
-// int main() {
-//     Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "onnx_inference");
-
-//     Ort::SessionOptions session_options;
-//     session_options.SetIntraOpNumThreads(1);
-
-//     Ort::Session session(env, "model.onnx", session_options);
-
-//     // Get allocator and input/output names
-//     Ort::AllocatorWithDefaultOptions allocator;
-
-//     // Get input name
-//     std::vector<const char*> input_names = session.GetInputNames(allocator);
-//     std::vector<const char*> output_names = session.GetOutputNames(allocator);
-
-//     const std::array<int64_t, 2> input_shape{1, 33}; // batch size 1, 33 features
-//     std::vector<float> input_values(33, 0.5f); // Dummy input values
-
-//     Ort::MemoryInfo memory_info = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);
-//     Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
-//         memory_info, input_values.data(), input_values.size(), input_shape.data(), input_shape.size()
-//     );
-
-//     // Run inference
-//     auto output_tensors = session.Run(
-//         Ort::RunOptions{nullptr},
-//         input_names.data(),
-//         &input_tensor,
-//         1,
-//         output_names.data(),
-//         1
-//     );
-
-//     // Extract output
-//     float* output = output_tensors.front().GetTensorMutableData<float>();
-
-//     std::cout << "Model output (class scores):" << std::endl;
-//     for (int i = 0; i < 11; ++i) {
-//         std::cout << "Class " << i << ": " << output[i] << std::endl;
-//     }
-
-//     return 0;
-// }
