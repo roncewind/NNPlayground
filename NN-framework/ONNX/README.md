@@ -58,6 +58,6 @@ export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 ✅  📉 Add a softmax function to get probability scores
 ✅  🔝 Print or log top-1 / top-3 predicted class labels
     📉 Measure inference time per sample
-    🔁 Loop over a batch of CSV inputs
+✅  🔁 Loop over a batch of CSV inputs
     🚀 Use ONNX Runtime with GPU (CUDA EP) for acceleration
     📦 Package as a CLI tool for quick inference from the terminal
