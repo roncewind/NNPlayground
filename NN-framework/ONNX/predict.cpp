@@ -21,6 +21,7 @@
 #include <cmath>
 #include <numeric>
 #include <algorithm>
+#include <fstream>
 
 // ============================================================================
 std::vector<std::pair<int, float>> top_k(const std::vector<float> &probs, int k)
@@ -64,6 +65,20 @@ std::vector<float> softmax(const float *logits, size_t size)
     }
 
     return probs;
+}
+
+// ============================================================================
+std::vector<std::string> load_class_labels(const std::string &filename)
+{
+    std::vector<std::string> labels;
+    std::ifstream infile(filename);
+    std::string line;
+    while (std::getline(infile, line))
+    {
+        if (!line.empty())
+            labels.push_back(line);
+    }
+    return labels;
 }
 
 // ============================================================================
@@ -117,10 +132,17 @@ int main()
     // Get output
     float *output = output_tensors.front().GetTensorMutableData<float>();
 
+    std::vector<std::string> class_labels = load_class_labels("../data/class_labels.txt");
+    if (class_labels.size() != 11)
+    {
+        std::cerr << "❌ Error: class_labels.txt must contain exactly 11 labels.\n";
+        return 1;
+    }
+
     std::cout << "✅ Model output (class scores):" << std::endl;
     for (int i = 0; i < 11; ++i)
     {
-        std::cout << "Class " << i << ": " << output[i] << std::endl;
+        std::cout << class_labels[i] << " (class " << i << "): " << output[i] << std::endl;
     }
 
     // Apply softmax to get probabilities
@@ -133,7 +155,9 @@ int main()
     std::cout << "\n🔝 Top " << k << " predictions:" << std::endl;
     for (const auto &[class_idx, prob] : top_preds)
     {
-        std::cout << "Class " << class_idx << ": " << prob * 100 << "% confidence" << std::endl;
+        std::cout << class_labels[class_idx]
+                  << " (class " << class_idx << "): "
+                  << prob * 100 << "% confidence" << std::endl;
     }
 
     return 0;
