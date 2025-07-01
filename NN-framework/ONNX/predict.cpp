@@ -139,7 +139,7 @@ int main()
         return 1;
     }
 
-    std::cout << "✅ Model output (class scores):" << std::endl;
+    std::cout << "\n✅ Model output (class scores):" << std::endl;
     for (int i = 0; i < 11; ++i)
     {
         std::cout << class_labels[i] << " (class " << i << "): " << output[i] << std::endl;
