@@ -24,6 +24,7 @@
 #include <fstream>
 #include <string>
 #include <unordered_map>
+#include <sstream>
 
 // ============================================================================
 // Minimal flag parser
@@ -190,8 +191,6 @@ int main(int argc, char *argv[])
     Ort::AllocatorWithDefaultOptions allocator;
 
     // Get input name
-    // const char* input_name = session.GetInputName(0, allocator);
-    // const char* output_name = session.GetOutputName(0, allocator);
     std::vector<std::string> input_names_str = session.GetInputNames();
     std::vector<std::string> output_names_str = session.GetOutputNames();
 
@@ -228,29 +227,12 @@ int main(int argc, char *argv[])
             1,
             output_names.data(),
             1);
-        // batch=1, 33 features
-        // const std::array<int64_t, 2> input_shape{1, input_size};
-
-        // Create input tensor with 33 dummy values
-        // std::vector<float> input_values(input_size, 0.5f); // TODO: Replace with real data
-
-        // Ort::MemoryInfo memory_info = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);
-        // Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
-        //     memory_info, input_values.data(), input_values.size(), input_shape.data(), input_shape.size());
-
-        // Run inference
-        // auto output_tensors = session.Run(
-        //     Ort::RunOptions{nullptr},
-        //     input_names.data(),
-        //     &input_tensor,
-        //     1,
-        //     output_names.data(),
-        //     1);
 
         // Get output
         float *logits = output_tensors.front().GetTensorMutableData<float>();
+
+        // Apply softmax to get probabilities
         std::vector<float> probs = softmax(logits, output_size);
-        // float *output = output_tensors.front().GetTensorMutableData<float>();
 
         if (class_labels.size() != static_cast<size_t>(output_size))
         {
@@ -258,18 +240,15 @@ int main(int argc, char *argv[])
             return 1;
         }
 
+        std::cout << "\n ===================================================" << std::endl;
+        std::cout << " == Row: " << row_idx + 1 << std::endl;
         std::cout << "\n✅ Model output (class scores):" << std::endl;
         for (int i = 0; i < output_size; ++i)
         {
             std::cout << class_labels[i] << " (class " << i << "): " << logits[i] << std::endl;
-            // std::cout << class_labels[i] << " (class " << i << "): " << output[i] << std::endl;
         }
 
-        // Apply softmax to get probabilities
-        // std::vector<float> probs = softmax(output, output_size);
-        std::vector<float> probs = softmax(logits, output_size);
-
-        // Print top-3 predictions
+        // Print top-k predictions
         auto top_preds = top_k(probs, k);
 
         std::cout << "\n🔝 Top " << k << " predictions:" << std::endl;
