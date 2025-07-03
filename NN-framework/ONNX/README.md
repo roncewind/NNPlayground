@@ -39,7 +39,7 @@ sudo ln -sf /usr/local/lib/libonnxruntime.so.1.22.0 /usr/local/lib/libonnxruntim
 sudo ln -sf /usr/local/lib/libonnxruntime.so.1 /usr/local/lib/libonnxruntime.so
 ```
 
-- Update the library path with `ldconfig`
+- Update the linker bindings and cache with `ldconfig`.
 
 ```
 sudo ldconf
@@ -55,9 +55,9 @@ export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 ## TODO:
 
 🔧 Nice-to-Haves:
-✅  📉 Add a softmax function to get probability scores
-✅  🔝 Print or log top-1 / top-3 predicted class labels
-    📉 Measure inference time per sample
-✅  🔁 Loop over a batch of CSV inputs
-    🚀 Use ONNX Runtime with GPU (CUDA EP) for acceleration
-    📦 Package as a CLI tool for quick inference from the terminal
+- ✅  📉 Add a softmax function to get probability scores
+- ✅  🔝 Print or log top-1 / top-3 predicted class labels
+-     📉 Measure inference time per sample
+- ✅  🔁 Loop over a batch of CSV inputs
+-     🚀 Use ONNX Runtime with GPU (CUDA EP) for acceleration
+-     📦 Package as a CLI tool for quick inference from the terminal
