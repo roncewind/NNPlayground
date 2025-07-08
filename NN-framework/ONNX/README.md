@@ -51,6 +51,23 @@ sudo ldconf
 export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 ```
 
+## Files:
+
+- `predict.cpp`: will make prediction based on the model file you give it against a test CSV file. Usage:
+
+```
+./predict --model ../data/best_model.onnx --labels ../data/class_labels.txt --input-size 33 --output-size 11 --top-k 3 --test-csv ../data/test_features.csv
+```
+
+- `save_model.cpp`: generated an `embedded_model.h` file which is a version of the model that can be embedded in a C++ program
+- `test_embedded_model.cpp`: tests that the model created by `save_model` can be loaded by the ONNX runtime.
+- `predict_embedded.cpp`: just like `predict` but will make prediction based on the model saved in the `embedded_model.h` file. Usage:
+
+```
+./predict_embedded --labels ../data/class_labels.txt --input-size 33 --output-size 11 --top-k 3 --test-csv ../data/test_features.csv
+```
+
+Note: if you diff the output of `predict` and `predict_embedded` the only difference should be one line about which model it's using.
 
 ## TODO:
 
@@ -59,5 +76,5 @@ export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 - ✅  🔝 Print or log top-1 / top-3 predicted class labels
 -     📉 Measure inference time per sample
 - ✅  🔁 Loop over a batch of CSV inputs
--     🚀 Use ONNX Runtime with GPU (CUDA EP) for acceleration
--     📦 Package as a CLI tool for quick inference from the terminal
+-     🚀 Use ONNX Runtime with GPU (CUDA EP) for acceleration???
+-     📦 Work on CLI options for the embedded examples: output file name, input filename, others???
