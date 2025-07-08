@@ -94,6 +94,7 @@ def train(
     model = NeuralNet(hidden_size=hidden_size, num_layers=num_layers).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    # optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-4)
 
     best_val_acc = 0
     epochs_no_improve = 0
