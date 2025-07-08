@@ -7,6 +7,7 @@
 
 // Compile with:
 // g++ predict.cpp -o predict -I/path/to/onnxruntime/include -L/path/to/onnxruntime/lib -lonnxruntime -std=c++17
+// g++ predict.cpp -o predict -I/usr/local/include/onnxruntime/ -L/usr/local/lib -lonnxruntime -std=c++17
 // Make sure to replace /path/to/onnxruntime with the actual path to your ONNX Runtime installation.
 // Make sure ONNX Runtime's shared libraries are in your LD_LIBRARY_PATH or system path.
 // You can run the compiled binary with:
