@@ -7,14 +7,12 @@
 
 // Compile with:
 // g++ predict.cpp -o predict -I/path/to/onnxruntime/include -L/path/to/onnxruntime/lib -lonnxruntime -std=c++17
-// g++ predict.cpp -o predict -I/usr/local/include/onnxruntime/ -L/usr/local/lib -lonnxruntime -std=c++17
 // Make sure to replace /path/to/onnxruntime with the actual path to your ONNX Runtime installation.
+// EG. g++ predict.cpp -o predict -I/usr/local/include/onnxruntime -L/usr/local/lib -lonnxruntime -std=c++17
 // Make sure ONNX Runtime's shared libraries are in your LD_LIBRARY_PATH or system path.
 // You can run the compiled binary with:
 // ./predict
 // Ensure that the best_model.onnx file is in the data directory or provide the correct path to it in the code.
-// The input tensor is initialized with dummy values (0.5) for demonstration purposes. Replace these with actual data as needed.
-// The output will show the raw logits or softmax scores for each of the 11 classes.
 
 #include <iostream>
 #include <vector>

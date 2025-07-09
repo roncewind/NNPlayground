@@ -51,6 +51,7 @@ sudo ldconf
 export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 ```
 
+
 ## Files:
 
 - `predict.cpp`: will make prediction based on the model file you give it against a test CSV file. Usage:
@@ -59,9 +60,20 @@ export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 ./predict --model ../data/best_model.onnx --labels ../data/class_labels.txt --input-size 33 --output-size 11 --top-k 3 --test-csv ../data/test_features.csv
 ```
 
-- `save_model.cpp`: generated an `embedded_model.h` file which is a version of the model that can be embedded in a C++ program
+- `save_model.cpp`: generated an `embedded_model.h` file which is a version of the model that can be embedded in a C++ program. Usage:
+
+With all the defaults:
+```
+./save_model
+```
+
+With custom inputs
+```
+./save_model --model <path to onnx file> --output <path to custom header file>
+```
+
 - `test_embedded_model.cpp`: tests that the model created by `save_model` can be loaded by the ONNX runtime.
-- `predict_embedded.cpp`: just like `predict` but will make prediction based on the model saved in the `embedded_model.h` file. Usage:
+- `predict_embedded.cpp`: just like `predict` but will make prediction based on the model saved in the header file created with `save_model`. Usage:
 
 ```
 ./predict_embedded --labels ../data/class_labels.txt --input-size 33 --output-size 11 --top-k 3 --test-csv ../data/test_features.csv
@@ -77,4 +89,4 @@ Note: if you diff the output of `predict` and `predict_embedded` the only differ
 -     📉 Measure inference time per sample
 - ✅  🔁 Loop over a batch of CSV inputs
 -     🚀 Use ONNX Runtime with GPU (CUDA EP) for acceleration???
--     📦 Work on CLI options for the embedded examples: output file name, input filename, others???
+- ✅  📦 Work on CLI options for the embedded examples: output file name, input filename, others???

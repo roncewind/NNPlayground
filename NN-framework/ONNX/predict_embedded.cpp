@@ -1,20 +1,24 @@
-// This code is a simple ONNX Runtime C++ example to load a pre-trained ONNX model and perform inference.
-// It initializes the ONNX Runtime environment, creates a session with the model, prepares an input tensor, and runs inference to get the output.
-// The output is expected to be a vector of logits or softmax scores for 11 classes, which are printed to the console.
-// The input tensor is initialized with dummy values (0.5) for demonstration purposes, but in a real application, you would replace these with actual data.
-// The code assumes that the ONNX model is named `best_model.onnx` and is located in the `data` directory relative to the executable's path.
-// Make sure to have ONNX Runtime installed and properly linked in your C++ project to compile and run this code successfully.
+// This code is a simple ONNX Runtime C++ example to load a pre-trained ONNX
+// model and perform inference.
+// It initializes the ONNX Runtime environment, creates a session with the model,
+// prepares an input tensor, and runs inference to get the output.
+// The output is expected to be a vector of logits or softmax scores for 11
+// classes, which are printed to the console.
+// The input tensor is initialized with dummy values (0.5) for demonstration
+// purposes, but in a real application, you would replace these with actual data.
+// The code assumes that the ONNX model is named `best_model.onnx` and is
+// located in the `data` directory relative to the executable's path.
+// Make sure to have ONNX Runtime installed and properly linked in your C++
+// project to compile and run this code successfully.
 
 // Compile with:
 // g++ predict_embedded.cpp -o predict_embedded -I/path/to/onnxruntime/include -L/path/to/onnxruntime/lib -lonnxruntime -std=c++17
-// g++ predict_embedded.cpp -o predict_embedded -I/usr/local/include/onnxruntime/ -L/usr/local/lib -lonnxruntime -std=c++17
-// Make sure to replace /path/to/onnxruntime with the actual path to your ONNX Runtime installation.
+// Make sure to replace /path/to/onnxruntime with the actual path to your ONNX
+// Runtime installation.
+// EG. g++ predict_embedded.cpp -o predict_embedded -I/usr/local/include/onnxruntime/ -L/usr/local/lib -lonnxruntime -std=c++17
 // Make sure ONNX Runtime's shared libraries are in your LD_LIBRARY_PATH or system path.
 // You can run the compiled binary with:
-// ./predict
-// Ensure that the best_model.onnx file is in the data directory or provide the correct path to it in the code.
-// The input tensor is initialized with dummy values (0.5) for demonstration purposes. Replace these with actual data as needed.
-// The output will show the raw logits or softmax scores for each of the 11 classes.
+// ./predict_embedded
 
 #include <iostream>
 #include <vector>
