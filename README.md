@@ -103,6 +103,10 @@ python test_predict_row.py
 - `data/best_model.onnx` ONNX export of the best model
     - can be created with `python -c "from utils import export_to_onnx; export_to_onnx('data/best_model')"`
 
+## ONNX
+
+C++ code to use the model created and exported to ONNX format.
+
 ## tinkering
 
 These are just playground files, tinkering with NNs in various ways.
